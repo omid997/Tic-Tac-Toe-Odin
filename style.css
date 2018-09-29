@@ -1,0 +1,12 @@
+#box {
+  width: 600px;
+  height: 600px;
+  border: 2px solid #000000;
+  margin: 100px auto;
+}
+.cell {
+  width: 196px;
+  height: 196px;
+  border: 2px solid #000000;
+  float: left;
+}
