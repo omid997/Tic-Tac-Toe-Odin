@@ -1,49 +1,55 @@
 const Player = (name, marker, score, type) => {
+  const getName = () => name;
+  const getMarker = () => marker;
+  const getType = () => type;
   const addScore = () => score++;
   const getScore = () => score;
-
   return {
-    name,
-    marker,
-    type,
+    getName,
+    getMarker,
+    getType,
     addScore,
     getScore
   }
 }
-const GameBoard = (() => {
 
+const GameBoard = (() => {
   let player1;
   let player2;
   const getPlayer1 = () => player1;
   const getPlayer2 = () => player2;
-  
+
   let turn;
   const displayTurn = () => turn;
 
   let board = ['', '', '', '', '', '', '', '', ''];
+  const getBoard = () => board;
 
   const startGame = (p1, p2) => {
     player1 = p1;
     player2 = p2;
     setTurn();
   }
+
   const setTurn = () => {
     if (turn === player1) {
       turn = player2;
+      computer(getBoard());
     } else {
       turn = player1;
     }
   }
+
   const addSign = index => {
     if (board[index] === '') {
-      board[index] = turn.marker;
+      board[index] = turn.getMarker();
     } else {
       console.log("wrong cell is clicked!");
     }
   }
 
   const chackWin = () => {
-    let turnMarker = turn.marker.repeat(3);
+    let turnMarker = turn.getMarker().repeat(3);
     let counter = '';
 
     // check rows
@@ -93,7 +99,7 @@ const GameBoard = (() => {
       win();
       return true;
     }
-    if(checkTie() === true) {
+    if (checkTie() === true) {
       return true;
     }
     // game continues
@@ -103,16 +109,21 @@ const GameBoard = (() => {
 
   const win = () => {
     turn.addScore();
-    console.log(turn.getScore(), turn.name);
+  }
+
+  const clearGame = () => {
+    board = ['', '', '', '', '', '', '', '', ''];
+    turn = player1;
   }
   return {
-    board,
+    getBoard,
     addSign,
     gameEnded,
     displayTurn,
     startGame,
     getPlayer1,
-    getPlayer2
+    getPlayer2,
+    clearGame,
   }
 
 })();
@@ -122,6 +133,9 @@ const viewController = (() => {
   const cells = document.querySelectorAll('.cell');
   const firstScore = document.getElementById('firstscore');
   const secondScore = document.getElementById('secondscore');
+  const clearButton = document.getElementById('clear');
+  const situationBar = document.getElementById('situationbar');
+
   const eventListeners = () => {
     cells.forEach(cell => {
       cell.addEventListener('click', e => {
@@ -132,10 +146,18 @@ const viewController = (() => {
         }
       })
     });
+    clearButton.addEventListener('click', () => {
+      gameBox.classList.remove('ended');
+      cells.forEach(cell => {
+        cell.classList.remove('selected');
+        cell.textContent = '';
+      });
+      GameBoard.clearGame();
+    })
   }
 
   const updateView = () => {
-    GameBoard.board.forEach((content, index) => {
+    GameBoard.getBoard().forEach((content, index) => {
       if (content !== '') {
         cells[index].textContent = content;
         cells[index].classList.add('selected');
@@ -143,12 +165,13 @@ const viewController = (() => {
     });
     if (GameBoard.gameEnded()) {
       gameBox.classList.add('ended');
+      situationBar.textContent = `${GameBoard.displayTurn().getName()} wins!`;
+      clearButton.textContent = 'Play again'
     }
     firstScore.textContent = GameBoard.getPlayer1().getScore();
     secondScore.textContent = GameBoard.getPlayer2().getScore();
-    
-    
-    
+
+
   }
 
   return {
@@ -158,7 +181,27 @@ const viewController = (() => {
 })();
 
 let player1 = Player('omid', 'X', 0, 'human');
-let player2 = Player('PC', 'O', 0, 'human');
+let player2 = Player('PC', 'O', 0, 'computer');
 
 viewController.eventListeners();
 GameBoard.startGame(player1, player2);
+
+function computer(state) {
+  let numberOfEmptyCells = 0;
+  for (let index = 0; index < state.length; index++) {
+    if(state[index] === '') numberOfEmptyCells++;
+  }
+  let randomIndex = Math.floor((Math.random() * numberOfEmptyCells) + 1);
+  
+  console.log(numberOfEmptyCells, randomIndex);
+  numberOfEmptyCells = 0;
+  for (let index = 0; index < state.length; index++) {
+    if(state[index] === '') {numberOfEmptyCells++;}
+    if(numberOfEmptyCells == randomIndex) {
+      GameBoard.addSign(index);
+      viewController.updateView();
+      break;  
+    }
+  }
+  
+}
